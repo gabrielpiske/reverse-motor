@@ -1,0 +1,31 @@
+{
+  "name": "reverse-motor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IHM didática para partida e reversão de motor trifásico (K1/K2) em 12 bancadas (A–L) via Arduino + Web Serial + Firebase.",
+  "scripts": {
+    "dev": "next dev",
+    "dev:lan": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start",
+    "start:lan": "next start -H 0.0.0.0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "firebase": "^11.10.0",
+    "lucide-react": "^0.525.0",
+    "next": "^15.5.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/w3c-web-serial": "^1.0.8",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.8.0"
+  }
+}

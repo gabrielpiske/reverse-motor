@@ -1,0 +1,40 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "bancadas": {
+      ".read": true,
+      "$bancada": {
+        "device": {
+          ".write": "$bancada.matches(/^[A-L]$/)",
+          "status": {
+            ".validate": "newData.val() === 'online' || newData.val() === 'offline'"
+          },
+          "currentState": {
+            ".validate": "newData.isString() && newData.val().matches(/^(IDLE|K1_RUNNING|K2_RUNNING|EMERGENCY)$/)"
+          },
+          "telemetry": {
+            "k1Active": { ".validate": "newData.isBoolean()" },
+            "k2Active": { ".validate": "newData.isBoolean()" },
+            "lastCommand": { ".validate": "newData.isString() && newData.val().length <= 32" },
+            "lastError": { ".validate": "newData.isString() && newData.val().length <= 32" },
+            "errorAt": { ".validate": "newData.isNumber()" },
+            "updatedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "$other": { ".validate": false }
+        },
+        "commandQueue": {
+          ".write": "$bancada.matches(/^[A-L]$/)",
+          ".validate": "newData.hasChildren(['action', 'timestamp', 'nonce'])",
+          "action": {
+            ".validate": "newData.isString() && newData.val().matches(/^(K1_ON|K2_ON|OFF|EMERGENCY|RESET)$/)"
+          },
+          "timestamp": { ".validate": "newData.isNumber() && newData.val() <= now" },
+          "nonce": { ".validate": "newData.isString() && newData.val().length <= 64" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}

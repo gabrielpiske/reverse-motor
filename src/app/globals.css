@@ -1,0 +1,39 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: radial-gradient(ellipse at top, #1e293b 0%, #0b1120 60%);
+  min-height: 100dvh;
+  color: #e2e8f0;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-page {
+    break-inside: avoid;
+  }
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}

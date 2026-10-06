@@ -1,0 +1,19 @@
+# dependências
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# variáveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# logs
+npm-debug.log*
+
+# IDE
+.idea/workspace.xml
