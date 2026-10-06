@@ -2,12 +2,16 @@
 
 :root {
   color-scheme: dark;
+  --senai-blue: #004587;
+  --senai-blue-light: #005caa;
+  --senai-blue-dark: #002b5c;
+  --senai-cyan: #0ea5e9;
 }
 
 body {
-  background: radial-gradient(ellipse at top, #1e293b 0%, #0b1120 60%);
+  background: radial-gradient(circle at 50% 0%, #0c2340 0%, #051329 45%, #020914 100%);
   min-height: 100dvh;
-  color: #e2e8f0;
+  color: #f1f5f9;
   font-family:
     system-ui,
     -apple-system,
@@ -15,6 +19,14 @@ body {
     Roboto,
     sans-serif;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Efeito de grade sutil para identidade industrial de laboratório elétrico */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 69, 135, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 69, 135, 0.08) 1px, transparent 1px);
 }
 
 button {

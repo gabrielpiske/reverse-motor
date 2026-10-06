@@ -8,13 +8,15 @@ import {
   update,
   type DatabaseReference,
 } from 'firebase/database';
-import { Cable, Cloud, CloudOff, OctagonX, Power, RefreshCcw, Unplug, Usb } from 'lucide-react';
+import { Cable, Cloud, CloudOff, OctagonX, Power, RefreshCcw, Unplug, Usb, ArrowLeft, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import BancadaQRCode from '@/components/BancadaQRCode';
 import FirebaseConfigWarning from '@/components/FirebaseConfigWarning';
 import MotorStatusPanel from '@/components/MotorStatusPanel';
 import StatusBadge from '@/components/StatusBadge';
+import HeaderNav from '@/components/HeaderNav';
+import EducationalFooter from '@/components/EducationalFooter';
 import { isLocalhostUrl, useAppUrl } from '@/hooks/useAppUrl';
 import type { BancadaId } from '@/lib/bancadas';
 import { BAUD_RATE, COMMAND_MAX_AGE_MS, PING_INTERVAL_MS } from '@/lib/constants';
@@ -33,7 +35,7 @@ interface LogEntry {
 }
 
 const LOG_COLORS: Record<LogKind, string> = {
-  tx: 'text-sky-300',
+  tx: 'text-cyan-300',
   rx: 'text-emerald-300',
   info: 'text-slate-400',
   error: 'text-red-400',
@@ -308,123 +310,160 @@ export default function BancadaHost({ id }: { id: BancadaId }) {
   const qrWarning = appUrl && isLocalhostUrl(appUrl);
 
   return (
-    <main className="mx-auto max-w-6xl p-4 md:p-8">
-      <FirebaseConfigWarning />
+    <div className="flex min-h-dvh flex-col bg-grid-pattern">
+      <HeaderNav />
 
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-400 text-4xl font-black text-slate-950">
-            {id}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Bancada {id}</h1>
-            <p className="text-sm text-slate-400">Estação de comunicação — Arduino via USB</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge ok={connected} okLabel="Arduino conectado" failLabel="Arduino desconectado" />
-          <StatusBadge ok={connected && cloudOk} okLabel="Nuvem online" failLabel="Nuvem offline" />
-        </div>
-      </header>
+      <main className="mx-auto w-full max-w-6xl flex-1 p-4 md:p-8">
+        <FirebaseConfigWarning />
 
-      {supported === false && (
-        <div className="mb-6 rounded-xl border border-red-500/60 bg-red-950/40 p-4 text-sm text-red-200">
-          Este navegador não suporta a Web Serial API ou a página não está em contexto seguro. Use{' '}
-          <b>Google Chrome</b> ou <b>Microsoft Edge</b> no computador, acessando via <b>https://</b> ou{' '}
-          <b>http://localhost</b>.
-        </div>
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <section className="flex flex-col gap-6">
-          <div className="flex flex-wrap gap-3">
-            {!connected ? (
-              <button
-                onClick={() => void connect()}
-                disabled={!supported || conn === 'connecting'}
-                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-bold text-slate-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <Usb className="h-5 w-5" />
-                {conn === 'connecting' ? 'Conectando...' : 'Conectar Arduino'}
-              </button>
-            ) : (
-              <button
-                onClick={() => void teardown(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-5 py-3 font-bold transition hover:bg-slate-600"
-              >
-                <Unplug className="h-5 w-5" />
-                Desconectar
-              </button>
-            )}
-          </div>
-
-          <MotorStatusPanel state={motorState} online={connected} />
-
-          <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
-              Comando local (instrutor)
-            </h2>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => void executeCommand('OFF', 'local')}
-                disabled={!connected}
-                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 font-bold transition hover:bg-red-500 disabled:opacity-40"
-              >
-                <Power className="h-4 w-4" /> Parar
-              </button>
-              <button
-                onClick={() => void executeCommand('EMERGENCY', 'local')}
-                disabled={!connected}
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-red-500 px-4 py-2 font-bold text-red-300 transition hover:bg-red-950 disabled:opacity-40"
-              >
-                <OctagonX className="h-4 w-4" /> Emergência
-              </button>
-              <button
-                onClick={() => void executeCommand('RESET', 'local')}
-                disabled={!connected || motorState !== 'EMERGENCY'}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 font-bold transition hover:bg-slate-600 disabled:opacity-40"
-              >
-                <RefreshCcw className="h-4 w-4" /> Rearmar
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-700 bg-black/60 p-4">
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
-              <Cable className="h-4 w-4" /> Monitor serial
-            </h2>
-            <div className="h-64 overflow-y-auto font-mono text-xs leading-relaxed">
-              {logs.length === 0 && <p className="text-slate-600">Nenhuma mensagem ainda.</p>}
-              {logs.map((l) => (
-                <p key={l.id} className={LOG_COLORS[l.kind]}>
-                  <span className="text-slate-600">{l.time}</span>{' '}
-                  {l.kind === 'tx' ? '→ ' : l.kind === 'rx' ? '← ' : ''}
-                  {l.text}
-                </p>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <aside className="flex flex-col items-center gap-4 rounded-2xl border border-slate-700 bg-slate-900/70 p-6 text-center">
-          <h2 className="text-lg font-bold">Controle pelo celular</h2>
-          <p className="text-sm text-slate-400">Aponte a câmera para o QR Code para abrir a IHM da Bancada {id}.</p>
-          <BancadaQRCode id={id} size={260} showUrl />
-          {qrWarning && (
-            <p className="rounded-lg bg-amber-950/50 p-3 text-xs text-amber-200">
-              O QR Code aponta para <b>localhost</b> e não abrirá no celular. Defina{' '}
-              <code className="font-mono">NEXT_PUBLIC_APP_URL</code> no .env.local.
-            </p>
-          )}
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            {cloudOk ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
-            Mantenha esta aba aberta durante a aula.
-          </div>
-          <Link href="/" className="text-sm text-amber-300 underline-offset-4 hover:underline">
-            ← Voltar ao painel
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-300 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" /> Voltar ao Painel Geral
           </Link>
-        </aside>
-      </div>
-    </main>
+          <span className="text-xs text-slate-400">
+            SENAI LAB • Bancada Didática {id}
+          </span>
+        </div>
+
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-blue-900/50 bg-gradient-to-r from-[#0c2340]/90 to-[#061426]/90 p-6 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#004587] to-[#005caa] text-4xl font-black text-white shadow-lg border border-blue-300/30">
+              {id}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-[#004587] px-2 py-0.5 text-xs font-bold text-white tracking-wider">
+                  SENAI
+                </span>
+                <h1 className="text-2xl font-bold text-white">Estação da Bancada {id}</h1>
+              </div>
+              <p className="text-xs sm:text-sm text-cyan-300 mt-1">
+                Comunicação Host USB (Web Serial 115200 bps) & Sincronização Firebase
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge ok={connected} okLabel="Arduino Conectado" failLabel="Arduino Desconectado" />
+            <StatusBadge ok={connected && cloudOk} okLabel="Nuvem Online" failLabel="Nuvem Offline" />
+          </div>
+        </header>
+
+        {supported === false && (
+          <div className="mb-6 rounded-2xl border border-red-500/60 bg-red-950/50 p-4 text-sm text-red-200">
+            Este navegador não suporta a Web Serial API ou a página não está em contexto seguro. Utilize{' '}
+            <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong> no computador da bancada.
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <section className="flex flex-col gap-6">
+            <div className="flex flex-wrap gap-3">
+              {!connected ? (
+                <button
+                  onClick={() => void connect()}
+                  disabled={!supported || conn === 'connecting'}
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#004587] to-[#005caa] px-6 py-3.5 font-bold text-white shadow-lg shadow-blue-950/60 hover:from-[#005caa] hover:to-[#0072ce] transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Usb className="h-5 w-5 text-cyan-300" />
+                  {conn === 'connecting' ? 'Conectando...' : 'Conectar Arduino USB'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => void teardown(true)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-blue-900 bg-slate-800 px-5 py-3.5 font-bold text-slate-200 transition hover:bg-slate-700"
+                >
+                  <Unplug className="h-5 w-5 text-red-400" />
+                  Desconectar Arduino
+                </button>
+              )}
+            </div>
+
+            <MotorStatusPanel state={motorState} online={connected} />
+
+            <div className="rounded-2xl border border-blue-900/40 bg-slate-900/60 p-5 shadow-lg">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-cyan-300">
+                Comandos Locais do Instrutor
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => void executeCommand('OFF', 'local')}
+                  disabled={!connected}
+                  className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 font-bold text-white transition hover:bg-red-500 disabled:opacity-40 shadow-md shadow-red-950/40"
+                >
+                  <Power className="h-4 w-4" /> Parar Motor
+                </button>
+                <button
+                  onClick={() => void executeCommand('EMERGENCY', 'local')}
+                  disabled={!connected}
+                  className="inline-flex items-center gap-2 rounded-xl border border-red-500 bg-red-950/40 px-5 py-2.5 font-bold text-red-300 transition hover:bg-red-900/60 disabled:opacity-40"
+                >
+                  <OctagonX className="h-4 w-4" /> Emergência
+                </button>
+                <button
+                  onClick={() => void executeCommand('RESET', 'local')}
+                  disabled={!connected || motorState !== 'EMERGENCY'}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-5 py-2.5 font-bold text-slate-200 transition hover:bg-slate-700 disabled:opacity-40"
+                >
+                  <RefreshCcw className="h-4 w-4 text-cyan-400" /> Rearmar
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-950 bg-black/70 p-5 shadow-inner">
+              <h2 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <Cable className="h-4 w-4 text-cyan-400" /> Monitor Serial da Bancada
+              </h2>
+              <div className="h-64 overflow-y-auto font-mono text-xs leading-relaxed border-t border-slate-900 pt-2">
+                {logs.length === 0 && <p className="text-slate-600">Aguardando conexão com o Arduino...</p>}
+                {logs.map((l) => (
+                  <p key={l.id} className={LOG_COLORS[l.kind]}>
+                    <span className="text-slate-600">{l.time}</span>{' '}
+                    {l.kind === 'tx' ? '→ ' : l.kind === 'rx' ? '← ' : ''}
+                    {l.text}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <aside className="flex flex-col items-center gap-4 rounded-3xl border border-blue-900/50 bg-gradient-to-b from-[#0c2340]/80 to-[#061426]/90 p-6 text-center shadow-xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-[#004587] px-2 py-0.5 text-[10px] font-bold text-white">SENAI</span>
+              <h2 className="text-lg font-bold text-white">QR Code da Bancada</h2>
+            </div>
+            
+            <p className="text-xs text-slate-300">
+              Solicite aos alunos que escaneiem pelo smartphone para abrir a IHM de controle desta bancada.
+            </p>
+
+            <div className="rounded-2xl bg-white p-3 shadow-xl border-4 border-blue-800/40">
+              <BancadaQRCode id={id} size={220} showUrl />
+            </div>
+
+            {qrWarning && (
+              <p className="rounded-xl border border-amber-500/50 bg-amber-950/60 p-3 text-xs text-amber-200">
+                Aviso: O QR Code aponta para <strong>localhost</strong>. Defina <code>NEXT_PUBLIC_APP_URL</code> no .env.local para que funcione pelo Wi-Fi no celular.
+              </p>
+            )}
+
+            <div className="flex items-center gap-2 text-xs text-cyan-300">
+              {cloudOk ? <Cloud className="h-4 w-4 text-cyan-400" /> : <CloudOff className="h-4 w-4 text-slate-500" />}
+              Mantenha esta aba aberta durante a aula.
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-blue-900/40 w-full text-center">
+              <p className="text-[11px] text-slate-400">
+                Docente: <a href="https://piske.online" target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-semibold hover:underline">Gabriel Piske</a>
+              </p>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <EducationalFooter compact />
+    </div>
   );
 }
